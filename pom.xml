@@ -9,9 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.wxx</groupId>
-    <artifactId>sb</artifactId>
+    <artifactId>spring-boot2</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>sb</name>
+    <name>spring-boot2</name>
     <description>Demo project for Spring Boot</description>
 
     <properties>
@@ -89,6 +89,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.34</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
