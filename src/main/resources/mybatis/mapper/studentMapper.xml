@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<!--
+执行增加操作的SQL语句
+1.id和parameterType 分别与StudentMapper接口中的addStudent方法的名字和 参数类型一致
+2.以#{studentName}的形式引用Student参数 的studentName属性，MyBatis将使用反射读取Student参数的此属性
+3.#{studentName}中studentName大小写敏感。引用其他的属性与此一致
+4.seGeneratedKeys设置为"true"表明要MyBatis获取由数据库自动生成的主键
+5.keyProperty="id"指定把获取到的主键值注入到Student的id属性
+-->
+
+<mapper namespace="com.wxx.sb.mapper.StudentMapper">
+    <!-- 当表中字段名跟实体类字段名不一致 或 为了返回list类型 而定义的returnMap -->
+
+    <resultMap type="Student" id="studentResultMap">
+        <id column="id" property="id"/>
+        <result column="student_name" property="studentName"/>
+        <result column="student_phone" property="studentPhone"/>
+    </resultMap>
+
+    <resultMap type="Score" id="scoreResultMap">
+        <id column="id" property="id"/>
+        <result column="subject" property="subject"/>
+        <result column="student_id" property="studentId"/>
+        <result column="subject_score" property="subjectScore"/>
+    </resultMap>
+
+    <!--
+    联合查询场景:在读取某个用户的所有成绩
+    当然还是需要在 StudentMapper.xml 里面配置 select 语句, 但重点是这个 select 的resultMap 对应什么样的数据呢。
+    这是重点，这里要引入 association 看定义如下 这样配置之后，就可以了，将 select 语句与resultMap 对应的映射结合起来看，就明白了。
+    用 association 来 得到关联的用户，这是多对一的情况，因为所有的文章都是同一个用户的。
+    -->
+    <resultMap id="resultStudentScoreList" type="StudentScores">
+        <id column="id" property="id"/>
+        <result column="student_name" property="studentName"/>
+        <result column="student_phone" property="studentPhone"/>
+        <association property="Scores" javaType="List">
+            <id column="id" property="id"/>
+            <result column="subject" property="subject"/>
+            <result column="student_id" property="studentId"/>
+            <result column="subject_core" property="subjectScore"/>
+        </association>
+    </resultMap>
+    <!--
+    还有另外一种处理方式，可以复用我们前面已经定义好的resultMap ,前面我们定义过一个resultListStudent,
+    看这第二种方法如何实现:将association 中对应的映射独立抽取出来，可以达到复用的目的
+    -->
+    <resultMap id="resultStudentScoreList1" type="StudentScores">
+        <id column="id" property="id"/>
+        <result column="student_name" property="studentName"/>
+        <result column="student_phone" property="studentPhone"/>
+        <association property="Score" javaType="List" resultMap="scoreResultMap"/>
+    </resultMap>
+
+    <!--新增-->
+
+    <insert id="addStudent" parameterType="Student" useGeneratedKeys="true" keyProperty="id">
+		insert into Student(student_name,student_phone)
+		values(#{studentName},#{studentPhone})
+	</insert>
+
+    <!--删除 1-->
+    <delete id="deleteByString" parameterType="String">
+		delete from Student where student_name=#{studentName}
+	</delete>
+    <!--删除 2-->
+    <delete id="deleteByStudent" parameterType="Student">
+		delete from Student where student_name=#{studentName}
+	</delete>
+
+    <!--修改-->
+    <update id="updateStudent" parameterType="Student">
+		update Student set
+		student_name = #{studentname},
+		student_phone = #{studentPhone}
+		where studentname=#{studentname}
+	</update>
+
+    <!--查询列表:返回list的select语句，注意resultMap的值是指向前面定义好的 -->
+    <select id="queryStudents" resultMap="studentResultMap">
+		select * from Student
+	</select>
+
+    <!-- 利用 hashMap 传递多个参数 -->
+    <select id="queryStudentByMap" parameterType="map" resultType="Student">
+        select * from Student where
+        <where>
+            1=1
+            <if test="studentPhone = null or studentPhone = ''">
+                and student_phone = #{studentPhone}
+            </if>
+            <if test="studentname = null or studentname = ''">
+                and student_name=#{studentname}
+            </if>
+        </where>
+    </select>
+
+    <!-- Mybatis 自带的多个参数传递方法 这个时候没有 parameterType, 但用到了类似 #{param1} 类似的参数 -->
+    <select id="queryStudentByParams" resultType="Student">
+		select * from Student where student_phone = #{param1} and student_name=#{param2}
+	</select>
+
+    <!-- 两个表关联查询 1 -->
+    <select id="queryStudentScores" resultMap="resultStudentArticleList">
+		select a.id,a.student_name,a.student_phone,b.id
+		sid,b.student_id,b.subject_score
+		from t_student a,t_student_score b
+		where
+		a.id=b.student_id
+	</select>
+    <!-- 两个表关联查询 2 -->
+    <select id="queryStudentScores1" parameterType="String" resultMap="resultStudentScoreList">
+		select a.id,a.student_name,a.student_phone,b.id
+		sid,b.student_id,b.subject_score
+		from t_student a,t_student_score b
+		where
+		Student.id = article.studentid and Student.student_name=#{studentName}
+	</select>
+    <!-- 两个表关联查询 3 -->
+    <select id="queryStudentScores2" resultMap="resultStudentScoreList1">
+		select a.id,a.student_name,a.student_phone,b.id
+		sid,b.student_id,b.subject_score
+		from t_student a,t_student_score b
+		where
+		Student.id = article.studentid and Student.id = #{id}
+	</select>
+</mapper>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<!--
+MyBatis 使用简单的 XML 或注解用于配置和原始映射，
+将接口和 Java 的 POJOs（Plan Old Java Objects，普通的Java 对象）映射成数据库中的记录。
+-->
+
+<!--
+无论是 hibernate还是Mybatis,都有一个共同点：
+    1. 从配置文件(通常是 XML 配置文件中)得到 sessionfactory
+	2. 由 sessionfactory 产生 session
+	3. 在 session 中完成对数据的增删改查和事务提交等.
+	4. 在用完之后关闭session 。
+	5. 在 Java 对象和 数据库之间有做 mapping 的配置文件，也通常是 xml 文件。
+-->
+
+<!--
+建表语句
+CREATE TABLE IF NOT EXISTS `t_student` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `student_name` VARCHAR(255) DEFAULT NULL,
+  `student_phone` VARCHAR(255) DEFAULT NULL,
+  PRIMARY KEY  (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 ;
+
+CREATE TABLE IF NOT EXISTS `t_student_score` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `subject` VARCHAR(255) DEFAULT NULL,
+  `student_id` INT(255) DEFAULT NULL,
+  `subject_score` INT(255),
+  PRIMARY KEY  (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 ;
+
+INSERT INTO `t_student` (`student_name`, `student_phone`) VALUES('小明','111');
+INSERT INTO `t_student` (`student_name`, `student_phone`) VALUES('小红','222');
+INSERT INTO `t_student` (`student_name`, `student_phone`) VALUES('小灰','333');
+INSERT INTO `t_student` (`student_name`, `student_phone`) VALUES('小朋','444');
+
+INSERT INTO `t_student_score` (`subject`, `student_id`, `subject_score`) VALUES('语文','1','30');
+INSERT INTO `t_student_score` (`subject`, `student_id`, `subject_score`) VALUES('数学','1','40');
+INSERT INTO `t_student_score` (`subject`, `student_id`, `subject_score`) VALUES('语文','2','50');
+INSERT INTO `t_student_score` (`subject`, `student_id`, `subject_score`) VALUES('数学','2','35');
+INSERT INTO `t_student_score` (`subject`, `student_id`, `subject_score`) VALUES('语文','3','50');
+INSERT INTO `t_student_score` (`subject`, `student_id`, `subject_score`) VALUES('数学','3','35');
+INSERT INTO `t_student_score` (`subject`, `student_id`, `subject_score`) VALUES('语文','4','50');
+INSERT INTO `t_student_score` (`subject`, `student_id`, `subject_score`) VALUES('数学','4','35');
+
+
+SELECT * FROM t_student ;
+SELECT * FROM t_student_score ;
+
+ -->
+
+
+<configuration>
+    <typeAliases>
+        <typeAlias alias="Student" type="com.wxx.sb.domain.Student"/>
+        <typeAlias alias="Score" type="com.wxx.sb.domain.Score"/>
+        <typeAlias alias="StudentScores" type="com.wxx.sb.domain.StudentScores"/>
+    </typeAliases>
+</configuration>
