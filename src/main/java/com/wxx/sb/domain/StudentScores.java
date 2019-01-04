@@ -1,12 +1,10 @@
 package com.wxx.sb.domain;
 
-import java.util.List;
-
 public class StudentScores {
     private Integer id;
     private String studentName;
     private String studentPhone;
-    private List<Score> scores;
+    private Score scores;
 
     public Integer getId() {
         return id;
@@ -32,11 +30,11 @@ public class StudentScores {
         this.studentPhone = studentPhone;
     }
 
-    public List<Score> getScores() {
+    public Score getScores() {
         return scores;
     }
 
-    public void setScores(List<Score> scores) {
+    public void setScores(Score scores) {
         this.scores = scores;
     }
 }
