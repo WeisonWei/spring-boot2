@@ -1,31 +1,31 @@
 package com.wxx.sb.config;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wxx.sb.domain.Student;
 import com.wxx.sb.util.RedisUtil;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisNode;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import redis.clients.jedis.JedisPoolConfig;
 
-@Configuration
-@EnableCaching
-@PropertySource("classpath:redis.properties")
-public class RedisConfig {
+import java.util.HashSet;
+import java.util.Set;
 
+/**
+ * redis集群配置
+ */
+//https://blog.csdn.net/plei_yue/article/details/79362372
+@Configuration
+@PropertySource("classpath:config/redis.properties")
+public class RedisClusterConfig {
     @Value("${redis.hostName}")
-    private String host;
+    private String hostName;
     @Value("${redis.password}")
     private String password;
     @Value("${redis.port}")
@@ -55,22 +55,6 @@ public class RedisConfig {
     @Value("${spring.redis.cluster.max-redirects}")
     private Integer mmaxRedirectsac;
 
-
-    /**
-     * 单机版配置
-     *
-     * @return
-     */
-    @Bean
-    public JedisConnectionFactory jedisConnectionFactory(JedisPoolConfig jedisPoolConfig) {
-        JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory(jedisPoolConfig);
-        jedisConnectionFactory.setHostName(host);
-        jedisConnectionFactory.setPort(port);
-        jedisConnectionFactory.setTimeout(timeout);
-        jedisConnectionFactory.setPassword(password);
-        return jedisConnectionFactory;
-    }
-
     /**
      * JedisPoolConfig 连接池
      *
@@ -96,9 +80,47 @@ public class RedisConfig {
         // 在空闲时检查有效性, 默认false
         jedisPoolConfig.setTestWhileIdle(testWhileIdle);
         return jedisPoolConfig;
-
     }
 
+    /**
+     * Redis集群的配置
+     *
+     * @return RedisClusterConfiguration
+     * @throws
+     * @autor lpl
+     * @date 2017年12月22日
+     */
+    @Bean
+    public RedisClusterConfiguration redisClusterConfiguration() {
+        RedisClusterConfiguration redisClusterConfiguration = new RedisClusterConfiguration();
+        //Set<RedisNode> clusterNode
+        String[] serverArray = clusterNodes.split(",");
+        Set<RedisNode> nodes = new HashSet<RedisNode>();
+        for (String ipPort : serverArray) {
+            String[] ipAndPort = ipPort.split(":");
+            nodes.add(new RedisNode(ipAndPort[0].trim(), Integer.valueOf(ipAndPort[1])));
+        }
+        redisClusterConfiguration.setClusterNodes(nodes);
+        redisClusterConfiguration.setMaxRedirects(mmaxRedirectsac);
+        return redisClusterConfiguration;
+    }
+
+    /**
+     * 配置工厂
+     *
+     * @param @param  jedisPoolConfig
+     * @param @return
+     * @return JedisConnectionFactory
+     * @throws
+     * @Title: JedisConnectionFactory
+     * @autor lpl
+     * @date 2017年12月22日
+     */
+    @Bean
+    public JedisConnectionFactory JedisConnectionFactory(JedisPoolConfig jedisPoolConfig, RedisClusterConfiguration redisClusterConfiguration) {
+        JedisConnectionFactory JedisConnectionFactory = new JedisConnectionFactory(redisClusterConfiguration, jedisPoolConfig);
+        return JedisConnectionFactory;
+    }
 
     /**
      * 实例化 RedisTemplate 对象
@@ -145,53 +167,5 @@ public class RedisConfig {
         redisUtil.setRedisTemplate(functionDomainRedisTemplate);
         return redisUtil;
     }
-
-
-    /**
-     * RedisTemplate配置
-     *
-     * @param jedisConnectionFactory
-     * @return
-     */
-    @Bean(name = "MyRedisTemplate")
-    public RedisTemplate<String, Object> myRedisTemplate(JedisConnectionFactory jedisConnectionFactory) {
-        //设置序列化
-        Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
-        ObjectMapper om = new ObjectMapper();
-        om.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        om.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
-        jackson2JsonRedisSerializer.setObjectMapper(om);
-        //配置redisTemplate
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<String, Object>();
-        redisTemplate.setConnectionFactory(jedisConnectionFactory);
-        RedisSerializer stringSerializer = new StringRedisSerializer();
-        redisTemplate.setKeySerializer(stringSerializer);//key序列化
-        redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);//value序列化
-        redisTemplate.setHashKeySerializer(stringSerializer);//Hash key序列化
-        redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);//Hash value序列化
-        redisTemplate.afterPropertiesSet();
-        return redisTemplate;
-    }
-
-    /**
-     * @param jedisConnectionFactory
-     * @return
-     */
-    @Bean(name = "StudentRedisTemplate")
-    public RedisTemplate<String, Student> studentRedisTemplate(JedisConnectionFactory jedisConnectionFactory) {
-        //设置序列化
-        Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
-
-        //配置redisTemplate
-        RedisTemplate<String, Student> redisTemplate = new RedisTemplate();
-        redisTemplate.setConnectionFactory(jedisConnectionFactory);
-
-        RedisSerializer stringSerializer = new StringRedisSerializer();
-        redisTemplate.setKeySerializer(stringSerializer);//key序列化
-        redisTemplate.setHashKeySerializer(stringSerializer);//Hash key序列化
-
-        redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);//value序列化
-        redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);//Hash value序列化
-        return redisTemplate;
-    }
 }
+
