@@ -14,5 +14,5 @@ public class TopicConsumerHandler {
     public void consum(Object o) {
         System.out.println("------>" + o.toString());
     }
-    
+
 }
